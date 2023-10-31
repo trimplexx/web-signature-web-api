@@ -11,8 +11,8 @@ using web_signature_web_api.Migrations;
 namespace web_signature_web_api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20231025174435_InitialCreate2")]
-    partial class InitialCreate2
+    [Migration("20231030111413_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
