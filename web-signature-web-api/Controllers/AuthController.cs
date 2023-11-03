@@ -49,6 +49,61 @@ namespace web_signature_web_api.Controllers
             return Ok(new { message = "Użytkownik został pomyślnie zarejestrowany" });
         }
 
+        [HttpPost]
+        [Route("Login")]
+        public async Task<IActionResult> Login(LoginRequest loginRequest)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == loginRequest.Email);
+            if (user == null)
+            {
+                return NotFound(new { error = "UserNotFound", message = "Użytkownik o podanym adresie e-mail nie istnieje" });
+            }
+
+            var hashedPassword = HashPassword(loginRequest.Password);
+            if (user.Password != hashedPassword)
+            {
+                return BadRequest(new { error = "InvalidCredentials", message = "Nieprawidłowe poświadczenia" });
+            }
+
+            var token = GenerateJwtToken(user);
+
+            return Ok(new { token });
+        }
+
+        [HttpPost]
+        [Route("Edit")]
+        public async Task<IActionResult> Edit(EditRequest editRequest)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == editRequest.Id);
+            if (user == null)
+            {
+                return NotFound(new { error = "UserNotFound", message = "Użytkownik nie istnieje" });
+            }
+
+            var hashedOldPassword = HashPassword(editRequest.Old_password);
+            if (user.Password != hashedOldPassword)
+            {
+                return BadRequest(new { error = "InvalidCredentials", message = "Nieprawidłowe hasło" });
+            }
+
+            // Sprawdzenie, czy hasło spełnia wymagane warunki
+            if (!CheckPasswordRequirements(editRequest.New_password))
+            {
+                return BadRequest(new { error = "InvalidPassword", message = "Hasło musi mieć przynajmniej 6 znaków oraz zawierać dużą literę i znak specjalny." });
+            }
+
+            var hashedNewPassword = HashPassword(editRequest.New_password);
+
+            // Edycja danych użytkownika
+            user.Password = hashedNewPassword;
+            user.First_name = editRequest.First_name;
+            user.Last_name = editRequest.Last_name;
+            var token = GenerateJwtToken(user);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { token, message = "Dane zostały pomyślnie zaktualizowane!" });
+        }
+
         // Metoda do hashowania hasła
         private string HashPassword(string password)
         {
@@ -99,7 +154,8 @@ namespace web_signature_web_api.Controllers
                 {
                     new Claim("UserId", user.Id.ToString()),
                     new Claim("Email", user.Email),
-                    new Claim("FirstName", user.First_name) 
+                    new Claim("FirstName", user.First_name),
+                    new Claim("LastName", user.Last_name)
                 }),
                 Expires = DateTime.UtcNow.AddHours(1), // Ustaw tu czas wygaśnięcia tokena
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -107,27 +163,5 @@ namespace web_signature_web_api.Controllers
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
-
-        [HttpPost]
-        [Route("Login")]
-        public async Task<IActionResult> Login(LoginRequest loginRequest)
-        {
-            var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == loginRequest.Email);
-            if (user == null)
-            {
-                return NotFound(new { error = "UserNotFound", message = "Użytkownik o podanym adresie e-mail nie istnieje" });
-            }
-
-            var hashedPassword = HashPassword(loginRequest.Password);
-            if (user.Password != hashedPassword)
-            {
-                return BadRequest(new { error = "InvalidCredentials", message = "Nieprawidłowe poświadczenia" });
-            }
-
-            var token = GenerateJwtToken(user);
-
-            return Ok(new { token });
-        }
-
     }
 }

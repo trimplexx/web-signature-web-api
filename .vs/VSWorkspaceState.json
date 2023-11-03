@@ -1,8 +1,9 @@
 {
   "ExpandedNodes": [
     "",
-    "\\web-signature-web-api"
+    "\\web-signature-web-api",
+    "\\web-signature-web-api\\Controllers"
   ],
-  "SelectedNode": "\\web-signature-web-api\\Program.cs",
+  "SelectedNode": "\\web-signature-web-api\\Controllers\\AuthController.cs",
   "PreviewInSolutionExplorer": false
 }
