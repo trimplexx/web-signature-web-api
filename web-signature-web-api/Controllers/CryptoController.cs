@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
+using System.Text;
 using web_signature_web_api.Migrations;
 using web_signature_web_api.Models;
 
@@ -18,42 +19,7 @@ namespace web_signature_web_api.Controllers
         {
             _context = context;
         }
-
-        /*    [HttpPost("generate-keys")]
-            public async Task<IActionResult> GenerateKeys(UserIdRequest userIdRequest)
-            {
-                // Wyszukanie użytkownika o podanym Id
-                var user = await _context.Users.FindAsync(userIdRequest.Id);
-                if (user == null)
-                {
-                    return NotFound(new { error = "UserNotFound", message = "Nie znaleziono użytkownika" });
-                }
-
-                //Generowanie Kluczy
-                using var rsa = new RSACryptoServiceProvider(2048);
-                try
-                {
-                    var publicKey = rsa.ToXmlString(false);
-                    var privateKey = rsa.ToXmlString(true);
-
-                    var userPublicKey = new UserPublicKey
-                    {
-                        UserId = userIdRequest.Id,
-                        PublicKey = publicKey,
-                        CreatedAt = DateTime.UtcNow,
-                        ExpiresAt = DateTime.UtcNow.AddYears(1)
-                    };
-                    _context.UserPublicKeys.Add(userPublicKey);
-                    await _context.SaveChangesAsync();
-
-                    return Ok(new { privateKey = privateKey });
-                }
-                catch (Exception ex)
-                {
-                    return BadRequest(new { message = "Wystąpił błąd podczas generowania kluczy.", exception = ex.Message });
-                }
-            }*/
-
+        
         [HttpPost("upload-public-key")]
         public async Task<IActionResult> UploadPublicKey([FromBody] PublicKeyRequest request)
         {
@@ -108,6 +74,31 @@ namespace web_signature_web_api.Controllers
             {
                 return StatusCode(500, new { message = "Wystąpił błąd podczas usuwania klucza.", exception = ex.Message });
             }
+        }
+        [HttpGet("download-public-key/{userId}")]
+        public async Task<IActionResult> DownloadPublicKey(int userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                return NotFound(new { error = "UserNotFound", message = "Nie znaleziono użytkownika" });
+            }
+
+            var userPublicKey = await _context.UserPublicKeys.FirstOrDefaultAsync(k => k.UserId == userId);
+            if (userPublicKey == null)
+            {
+                return NotFound(new { error = "PublicKeyNotFound", message = "Nie znaleziono klucza publicznego dla użytkownika" });
+            }
+
+            string jwkString = userPublicKey.PublicKey;
+            byte[] jwkBytes = Encoding.UTF8.GetBytes(jwkString);
+
+            var memoryStream = new MemoryStream();
+            await memoryStream.WriteAsync(jwkBytes, 0, jwkBytes.Length);
+            memoryStream.Position = 0;
+
+            string fileName = $"public_key_{userId}.jwk";
+            return File(memoryStream, "application/octet-stream", fileName);
         }
     }
 }
