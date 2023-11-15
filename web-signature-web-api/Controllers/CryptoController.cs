@@ -19,7 +19,7 @@ namespace web_signature_web_api.Controllers
         {
             _context = context;
         }
-        
+
         [HttpPost("upload-public-key")]
         public async Task<IActionResult> UploadPublicKey([FromBody] PublicKeyRequest request)
         {
@@ -39,7 +39,7 @@ namespace web_signature_web_api.Controllers
             };
             _context.UserPublicKeys.Add(userPublicKey);
             await _context.SaveChangesAsync();
-            
+
             return Ok(new { message = "Klucz publiczny przesłany pomyślnie." });
         }
 
@@ -49,7 +49,7 @@ namespace web_signature_web_api.Controllers
         {
             // Sprawdzenie, czy użytkownik posiada klucz
             var keyExists = await _context.UserPublicKeys
-                                          .AnyAsync(k => k.UserId == userId && k.ExpiresAt > DateTime.UtcNow);
+                .AnyAsync(k => k.UserId == userId && k.ExpiresAt > DateTime.UtcNow);
             return Ok(new { keyExists });
         }
 
@@ -72,9 +72,11 @@ namespace web_signature_web_api.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Wystąpił błąd podczas usuwania klucza.", exception = ex.Message });
+                return StatusCode(500,
+                    new { message = "Wystąpił błąd podczas usuwania klucza.", exception = ex.Message });
             }
         }
+
         [HttpGet("download-public-key/{userId}")]
         public async Task<IActionResult> DownloadPublicKey(int userId)
         {
@@ -87,18 +89,13 @@ namespace web_signature_web_api.Controllers
             var userPublicKey = await _context.UserPublicKeys.FirstOrDefaultAsync(k => k.UserId == userId);
             if (userPublicKey == null)
             {
-                return NotFound(new { error = "PublicKeyNotFound", message = "Nie znaleziono klucza publicznego dla użytkownika" });
+                return NotFound(new
+                    { error = "PublicKeyNotFound", message = "Nie znaleziono klucza publicznego dla użytkownika" });
             }
 
-            string jwkString = userPublicKey.PublicKey;
-            byte[] jwkBytes = Encoding.UTF8.GetBytes(jwkString);
-
-            var memoryStream = new MemoryStream();
-            await memoryStream.WriteAsync(jwkBytes, 0, jwkBytes.Length);
-            memoryStream.Position = 0;
-
-            string fileName = $"public_key_{userId}.jwk";
-            return File(memoryStream, "application/octet-stream", fileName);
+            // Zakładam, że twój klucz publiczny jest zakodowany w Base64
+            var publicKeyBytes = Convert.FromBase64String(userPublicKey.PublicKey);
+            return File(publicKeyBytes, "application/octet-stream", "publicKey.spki");
         }
     }
 }

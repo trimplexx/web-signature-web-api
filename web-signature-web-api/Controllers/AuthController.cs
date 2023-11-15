@@ -34,7 +34,8 @@ namespace web_signature_web_api.Controllers
             // Sprawdzenie, czy użytkownik o podanym adresie e-mail już istnieje
             if (await _context.Users.AnyAsync(x => x.Email == user.Email))
             {
-                return BadRequest(new { error = "EmailAlreadyExists", message = "Użytkownik o podanym adresie e-mail już istnieje" });
+                return BadRequest(new
+                    { error = "EmailAlreadyExists", message = "Użytkownik o podanym adresie e-mail już istnieje" });
             }
 
             user.Password = HashPassword(user.Password);
@@ -59,7 +60,8 @@ namespace web_signature_web_api.Controllers
             var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == loginRequest.Email);
             if (user == null)
             {
-                return NotFound(new { error = "UserNotFound", message = "Użytkownik o podanym adresie e-mail nie istnieje" });
+                return NotFound(new
+                    { error = "UserNotFound", message = "Użytkownik o podanym adresie e-mail nie istnieje" });
             }
 
             if (!CheckPassword(loginRequest.Password, user.Password))
@@ -91,7 +93,7 @@ namespace web_signature_web_api.Controllers
             // Zwracanie hasha jako stringa
             return Convert.ToBase64String(hashBytes);
         }
-        
+
         // Metoda do sprawdzania warunków hasła
         private bool CheckPassword(string enteredPassword, string storedHash)
         {
@@ -117,7 +119,7 @@ namespace web_signature_web_api.Controllers
 
             return true;
         }
-        
+
         private string GenerateJwtToken(User user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -128,8 +130,9 @@ namespace web_signature_web_api.Controllers
                 {
                     new Claim("UserId", user.Id.ToString()),
                 }),
-                Expires = DateTime.UtcNow.AddHours(1),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                Expires = DateTime.UtcNow.AddHours(72),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),
+                    SecurityAlgorithms.HmacSha256Signature)
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
@@ -141,7 +144,7 @@ namespace web_signature_web_api.Controllers
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_configuration["Jwt:SecretKey"]);
-    
+
             try
             {
                 tokenHandler.ValidateToken(tokenRequest.Token, new TokenValidationParameters
@@ -160,7 +163,7 @@ namespace web_signature_web_api.Controllers
 
             return Ok(new { message = "Token jest poprawny" });
         }
-        
+
         [HttpGet]
         [Route("User")]
         public async Task<IActionResult> GetUser([FromHeader] string userId)
@@ -171,7 +174,7 @@ namespace web_signature_web_api.Controllers
             {
                 return NotFound(new { error = "UserNotFound", message = "Nie znaleziono użytkownika" });
             }
-            
+
             return Ok(new
             {
                 first_name = user.First_name,
@@ -179,7 +182,7 @@ namespace web_signature_web_api.Controllers
                 email = user.Email
             });
         }
-        
+
         [HttpPost]
         [Route("UpdateData")]
         public async Task<IActionResult> UpdateUser(UserUpdateRequest userUpdateRequest)
@@ -190,10 +193,10 @@ namespace web_signature_web_api.Controllers
             {
                 return NotFound(new { error = "UserNotFound", message = "Nie znaleziono użytkownika" });
             }
-            
+
             user.First_name = userUpdateRequest.First_name;
             user.Last_name = userUpdateRequest.Last_name;
-            
+
             try
             {
                 await _context.SaveChangesAsync();
@@ -205,7 +208,7 @@ namespace web_signature_web_api.Controllers
 
             return Ok(new { message = "Dane użytkownika zostały pomyślnie zaktualizowane" });
         }
-        
+
         [HttpPost]
         [Route("ChangePassword")]
         public async Task<IActionResult> ChangePassword(ChangePasswordRequest changePasswordRequest)
@@ -216,16 +219,17 @@ namespace web_signature_web_api.Controllers
             {
                 return NotFound(new { error = "UserNotFound", message = "Nie znaleziono użytkownika" });
             }
-    
+
             // Sprawdzenie, czy podane stare hasło jest poprawne
             if (!CheckPassword(changePasswordRequest.OldPassword, user.Password))
             {
-                return BadRequest(new { error = "InvalidCredentials", message = "Podane stare hasło jest nieprawidłowe" });
+                return BadRequest(new
+                    { error = "InvalidCredentials", message = "Podane stare hasło jest nieprawidłowe" });
             }
-    
+
             // Ustawienie nowego hasła
             user.Password = HashPassword(changePasswordRequest.NewPassword);
-    
+
             try
             {
                 await _context.SaveChangesAsync();
