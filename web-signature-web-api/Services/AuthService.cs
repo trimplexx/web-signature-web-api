@@ -201,7 +201,7 @@ namespace web_signature_web_api.Services
         private string GenerateJwtToken(User user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            string jwtkey = _configuration["Jwt:Secret"];
+            string jwtkey = _configuration["Jwt:SecretKey"];
             var key = Encoding.ASCII.GetBytes(jwtkey);
             var tokenDescriptor = new SecurityTokenDescriptor
             {

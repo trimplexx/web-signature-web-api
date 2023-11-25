@@ -47,8 +47,6 @@ public static class Helper
         Password = "Kutas123!!"
     };
 
-
-
     public static String jwtKey = "webSignatureSecretKeyTest@";
 
     public static async Task<AppDbContext> GetDbContext()

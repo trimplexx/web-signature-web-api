@@ -72,7 +72,7 @@ public class AuthServiceTests
         {
 
             var configurationMock = new Mock<IConfiguration>();
-            configurationMock.Setup(x => x["Jwt:Secret"]).Returns(Helper.jwtKey);
+            configurationMock.Setup(x => x["Jwt:SecretKey"]).Returns(Helper.jwtKey);
             var authService = new AuthService(context, configurationMock.Object);
             // Act
             var result = await authService.Login(Helper.login);
@@ -92,7 +92,7 @@ public class AuthServiceTests
         using (var context = await Helper.GetDbContext())
         {
             var configurationMock = new Mock<IConfiguration>();
-            configurationMock.Setup(x => x["Jwt:Secret"]).Returns(Helper.jwtKey);
+            configurationMock.Setup(x => x["Jwt:SecretKey"]).Returns(Helper.jwtKey);
             var authService = new AuthService(context, configurationMock.Object);
             // Act
             var result = await authService.Login(Helper.loginBadMail);
@@ -112,7 +112,7 @@ public class AuthServiceTests
         using (var context = await Helper.GetDbContext())
         {
             var configurationMock = new Mock<IConfiguration>();
-            configurationMock.Setup(x => x["Jwt:Secret"]).Returns(Helper.jwtKey);
+            configurationMock.Setup(x => x["Jwt:SecretKey"]).Returns(Helper.jwtKey);
             var authService = new AuthService(context, configurationMock.Object);
             // Act
             var result = await authService.Login(Helper.loginBadPass);
