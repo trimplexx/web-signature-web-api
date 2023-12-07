@@ -60,7 +60,7 @@ namespace web_signature_web_api.Services
                     return new NotFoundObjectResult(new { message = "Klucz publiczny nie został znaleziony." });
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return new StatusCodeResult(500);
             }
